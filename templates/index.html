@@ -1,0 +1,31 @@
+!DOCTYPE html
+html lang='en'
+head
+    meta charset='UTF-8'
+    meta name='viewport' content='width=device-width, initial-scale=1.0'
+    titleSerial Datatitle
+    script
+        let intervalId;
+
+        function fetchData() {
+            fetch('data')
+                .then(response = response.text())
+                .then(data = {
+                    document.getElementById('serial-data').innerText = data;
+                });
+        }
+
+        function startFetching() {
+            if (!intervalId) {  Prevent multiple intervals
+                intervalId = setInterval(fetchData, 1000);  Fetch data every second
+                document.getElementById('start-button').disabled = true;  Disable the button once started
+            }
+        }
+    script
+head
+body
+    h1Live Serial Datah1
+    p id='serial-data'Waiting for data...p
+    button id=start-button onclick=startFetching()Start Fetching Databutton
+body
+html
