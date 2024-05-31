@@ -4,14 +4,48 @@
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Serial Data</title>
+    <style>
+        #container {
+            position: relative;
+            width: 80vw;
+            height: 20vw;
+            margin-top: 20px;
+        }
+        #car {
+            position: absolute;
+            bottom: 0;
+            width: 20vw;
+        }
+        #wall {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20vw;
+        }
+    </style>
     <script>
         let intervalId;
 
         function fetchData() {
             fetch('/data')
-                .then(response => response.text())
+                .then(response => response.json()) 
                 .then(data => {
-                    document.getElementById('serial-data').innerText = data;
+                    const serialDataElem = document.getElementById('serial-data');
+                    serialDataElem.innerText = Current Distance: ${data.current};
+
+                    const dataListElem = document.getElementById('data-list');
+                    dataListElem.innerHTML = ''; 
+                    data.history.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = item;
+                        dataListElem.appendChild(listItem);
+                    });
+
+                    
+                    const carElem = document.getElementById('car');
+                    const maxDistance = 250
+                    const carPosition = (maxDistance - data.current) / maxDistance * 53;
+                    carElem.style.left = ${carPosition}%;
                 });
         }
 
@@ -35,6 +69,8 @@
                 document.getElementById('start-button').disabled = false; 
                 document.getElementById('stop-button').disabled = true; 
                 document.getElementById('serial-data').innerText = 'Waiting for data...'; 
+                document.getElementById('data-list').innerHTML = ''; 
+                document.getElementById('car').style.left = '0'; 
             }
             fetch('/stop')
                 .then(response => response.text())
@@ -47,7 +83,7 @@
             fetch('/open')
                 .then(response => response.text())
                 .then(data => {
-                    alert(data); // Show response from server
+                    alert(data); 
                     document.getElementById('start-button').disabled = false; 
                     document.getElementById('close-button').disabled = false; 
                 });
@@ -58,11 +94,13 @@
                 .then(response => response.text())
                 .then(data => {
                     alert(data); 
-                    document.getElementById('open-button').disabled = false; 
-                    document.getElementById('start-button').disabled = true; 
+                    document.getElementById('open-button').disabled = false;
+                    document.getElementById('start-button').disabled = true;
                     document.getElementById('stop-button').disabled = true; 
                     document.getElementById('close-button').disabled = true; 
                     document.getElementById('serial-data').innerText = 'Waiting for data...'; 
+                    document.getElementById('data-list').innerHTML = ''; 
+                    document.getElementById('car').style.left = '0'; 
                 });
         }
     </script>
@@ -74,5 +112,10 @@
     <button id="start-button" onclick="startFetching()" disabled>Start Fetching Data</button>
     <button id="stop-button" onclick="stopFetching()" disabled>Stop Fetching Data</button>
     <button id="close-button" onclick="closeSystem()" disabled>Close System</button>
+    <ul id="data-list"></ul>
+    <div id="container">
+        <img id="car" src="{{ url_for('static', filename='car.jpg') }}" alt="Car">
+        <img id="wall" src="{{ url_for('static', filename='wall.jpg') }}" alt="Wall">
+    </div>
 </body>
 </html>

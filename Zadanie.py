@@ -1,19 +1,23 @@
 import serial
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 import threading
+from collections import deque
 
-app = Flask(__name__)
+app = Flask(_name_)
 
-serial_data = ''
+# Global variables to store serial data and serial connection
+serial_data = '0'
 ser = None
 monitoring = False
+data_history = deque(maxlen=10)  
 
 def read_from_serial():
-    global serial_data, ser, monitoring
+    global serial_data, ser, monitoring, data_history
     while True:
         if ser and ser.is_open and monitoring:
             read_ser = ser.readline()
             serial_data = read_ser.decode().strip()
+            data_history.append(serial_data)
 
 @app.route('/')
 def index():
@@ -21,7 +25,10 @@ def index():
 
 @app.route('/data')
 def data():
-    return serial_data
+    return jsonify({
+        'current': serial_data,
+        'history': list(data_history)
+    })
 
 @app.route('/open')
 def open_system():
@@ -49,11 +56,11 @@ def close_system():
     global ser, monitoring
     monitoring = False
     if ser:
-        ser.close()
+        ser.close()  
         ser = None
     return "System deactivated and connection closed"
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     thread = threading.Thread(target=read_from_serial)
     thread.daemon = True
     thread.start()
