@@ -1,31 +1,78 @@
-!DOCTYPE html
-html lang='en'
-head
-    meta charset='UTF-8'
-    meta name='viewport' content='width=device-width, initial-scale=1.0'
-    titleSerial Datatitle
-    script
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Serial Data</title>
+    <script>
         let intervalId;
 
         function fetchData() {
-            fetch('data')
-                .then(response = response.text())
-                .then(data = {
+            fetch('/data')
+                .then(response => response.text())
+                .then(data => {
                     document.getElementById('serial-data').innerText = data;
                 });
         }
 
         function startFetching() {
-            if (!intervalId) {  Prevent multiple intervals
-                intervalId = setInterval(fetchData, 1000);  Fetch data every second
-                document.getElementById('start-button').disabled = true;  Disable the button once started
+            if (!intervalId) { 
+                intervalId = setInterval(fetchData, 1000); 
+                document.getElementById('start-button').disabled = true; 
+                document.getElementById('stop-button').disabled = false; 
             }
+            fetch('/start')
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data); 
+                });
         }
-    script
-head
-body
-    h1Live Serial Datah1
-    p id='serial-data'Waiting for data...p
-    button id=start-button onclick=startFetching()Start Fetching Databutton
-body
-html
+
+        function stopFetching() {
+            if (intervalId) {
+                clearInterval(intervalId); 
+                intervalId = null;
+                document.getElementById('start-button').disabled = false; 
+                document.getElementById('stop-button').disabled = true; 
+                document.getElementById('serial-data').innerText = 'Waiting for data...'; 
+            }
+            fetch('/stop')
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data); 
+                });
+        }
+
+        function openSystem() {
+            fetch('/open')
+                .then(response => response.text())
+                .then(data => {
+                    alert(data); // Show response from server
+                    document.getElementById('start-button').disabled = false; 
+                    document.getElementById('close-button').disabled = false; 
+                });
+        }
+
+        function closeSystem() {
+            fetch('/close')
+                .then(response => response.text())
+                .then(data => {
+                    alert(data); 
+                    document.getElementById('open-button').disabled = false; 
+                    document.getElementById('start-button').disabled = true; 
+                    document.getElementById('stop-button').disabled = true; 
+                    document.getElementById('close-button').disabled = true; 
+                    document.getElementById('serial-data').innerText = 'Waiting for data...'; 
+                });
+        }
+    </script>
+</head>
+<body>
+    <h1>Live Serial Data</h1>
+    <p id='serial-data'>Waiting for data...</p>
+    <button id="open-button" onclick="openSystem()">Open System</button>
+    <button id="start-button" onclick="startFetching()" disabled>Start Fetching Data</button>
+    <button id="stop-button" onclick="stopFetching()" disabled>Stop Fetching Data</button>
+    <button id="close-button" onclick="closeSystem()" disabled>Close System</button>
+</body>
+</html>
