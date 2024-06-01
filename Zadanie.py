@@ -5,7 +5,6 @@ from collections import deque
 
 app = Flask(_name_)
 
-# Global variables to store serial data and serial connection
 serial_data = '0'
 ser = None
 monitoring = False

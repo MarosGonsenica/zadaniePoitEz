@@ -23,87 +23,140 @@
             width: 20vw;
         }
     </style>
-    <script>
-        let intervalId;
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        function fetchData() {
-            fetch('/data')
-                .then(response => response.json()) 
-                .then(data => {
-                    const serialDataElem = document.getElementById('serial-data');
-                    serialDataElem.innerText = Current Distance: ${data.current};
+<script>
+    let intervalId;
+    let dataChart;
 
-                    const dataListElem = document.getElementById('data-list');
-                    dataListElem.innerHTML = ''; 
-                    data.history.forEach(item => {
-                        const listItem = document.createElement('li');
-                        listItem.textContent = item;
-                        dataListElem.appendChild(listItem);
-                    });
-
-                    
-                    const carElem = document.getElementById('car');
-                    const maxDistance = 250
-                    const carPosition = (maxDistance - data.current) / maxDistance * 53;
-                    carElem.style.left = ${carPosition}%;
-                });
-        }
-
-        function startFetching() {
-            if (!intervalId) { 
-                intervalId = setInterval(fetchData, 1000); 
-                document.getElementById('start-button').disabled = true; 
-                document.getElementById('stop-button').disabled = false; 
+    function initializeChart() {
+        const ctx = document.getElementById('dataChart').getContext('2d');
+        dataChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], 
+                datasets: [{
+                    label: 'Serial Data',
+                    data: [], 
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Distance'
+                        }
+                    }
+                }
             }
-            fetch('/start')
-                .then(response => response.text())
-                .then(data => {
-                    console.log(data); 
-                });
-        }
+        });
+    }
 
-        function stopFetching() {
-            if (intervalId) {
-                clearInterval(intervalId); 
-                intervalId = null;
+    function updateChart(data) {
+        if (dataChart) {
+            dataChart.data.labels.push(new Date().toLocaleTimeString());
+            dataChart.data.datasets[0].data.push(data);
+
+            dataChart.update();
+        }
+    }
+
+    function fetchData() {
+        fetch('/data')
+            .then(response => response.json()) 
+            .then(data => {
+                const serialDataElem = document.getElementById('serial-data');
+                serialDataElem.innerText = Current Distance: ${data.current};
+
+                const dataListElem = document.getElementById('data-list');
+                dataListElem.innerHTML = ''; 
+                data.history.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = item;
+                    dataListElem.appendChild(listItem);
+                });
+
+                const carElem = document.getElementById('car');
+                const maxDistance = 250;
+                const carPosition = (maxDistance - data.current) / maxDistance * 53;
+                carElem.style.left = ${carPosition}%;
+
+                updateChart(data.current);
+            });
+    }
+
+    function startFetching() {
+        if (!intervalId) { 
+            intervalId = setInterval(fetchData, 1000); 
+            document.getElementById('start-button').disabled = true; 
+            document.getElementById('stop-button').disabled = false; 
+        }
+        fetch('/start')
+            .then(response => response.text())
+            .then(data => {
+                console.log(data); 
+            });
+    }
+
+    function stopFetching() {
+        if (intervalId) {
+            clearInterval(intervalId); 
+            intervalId = null;
+            document.getElementById('start-button').disabled = false; 
+            document.getElementById('stop-button').disabled = true; 
+            document.getElementById('serial-data').innerText = 'Waiting for data...'; 
+            document.getElementById('data-list').innerHTML = ''; 
+            document.getElementById('car').style.left = '0'; 
+        }
+        fetch('/stop')
+            .then(response => response.text())
+            .then(data => {
+                console.log(data); 
+            });
+    }
+
+    function openSystem() {
+        fetch('/open')
+            .then(response => response.text())
+            .then(data => {
+                alert(data); 
                 document.getElementById('start-button').disabled = false; 
+                document.getElementById('close-button').disabled = false; 
+            });
+    }
+
+    function closeSystem() {
+        fetch('/close')
+            .then(response => response.text())
+            .then(data => {
+                alert(data); 
+                document.getElementById('open-button').disabled = false; 
+                document.getElementById('start-button').disabled = true; 
                 document.getElementById('stop-button').disabled = true; 
+                document.getElementById('close-button').disabled = true; 
                 document.getElementById('serial-data').innerText = 'Waiting for data...'; 
                 document.getElementById('data-list').innerHTML = ''; 
                 document.getElementById('car').style.left = '0'; 
-            }
-            fetch('/stop')
-                .then(response => response.text())
-                .then(data => {
-                    console.log(data); 
-                });
-        }
+            });
+    }
 
-        function openSystem() {
-            fetch('/open')
-                .then(response => response.text())
-                .then(data => {
-                    alert(data); 
-                    document.getElementById('start-button').disabled = false; 
-                    document.getElementById('close-button').disabled = false; 
-                });
-        }
+    window.onload = function() {
+        initializeChart();
+    };
+</script>
 
-        function closeSystem() {
-            fetch('/close')
-                .then(response => response.text())
-                .then(data => {
-                    alert(data); 
-                    document.getElementById('open-button').disabled = false;
-                    document.getElementById('start-button').disabled = true;
-                    document.getElementById('stop-button').disabled = true; 
-                    document.getElementById('close-button').disabled = true; 
-                    document.getElementById('serial-data').innerText = 'Waiting for data...'; 
-                    document.getElementById('data-list').innerHTML = ''; 
-                    document.getElementById('car').style.left = '0'; 
-                });
-        }
-    </script>
 </head>
 <body>
     <h1>Live Serial Data</h1>
@@ -117,5 +170,7 @@
         <img id="car" src="{{ url_for('static', filename='car.jpg') }}" alt="Car">
         <img id="wall" src="{{ url_for('static', filename='wall.jpg') }}" alt="Wall">
     </div>
+    <canvas id="dataChart" width="400" height="200"></canvas>
+
 </body>
 </html>
