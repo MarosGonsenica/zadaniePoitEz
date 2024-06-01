@@ -22,149 +22,203 @@
             right: 0;
             width: 20vw;
         }
+        .input-fields {
+            display: block;
+            margin-bottom: 10px;
+        }
+            .input-fields {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .input-fields label {
+        width: 200px; 
+        margin-right: 10px;
+        text-align: right;
+    }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script>
-    let intervalId;
-    let dataChart;
+    <script>
+        let intervalId;
+        let dataChart;
 
-    function initializeChart() {
-        const ctx = document.getElementById('dataChart').getContext('2d');
-        dataChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [], 
-                datasets: [{
-                    label: 'Serial Data',
-                    data: [], 
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1,
-                    fill: false
-                }]
-            },
-            options: {
-                scales: {
-                    x: {
-                        display: true,
-                        title: {
+        function initializeChart() {
+            const ctx = document.getElementById('dataChart').getContext('2d');
+            dataChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [], 
+                    datasets: [{
+                        label: 'Serial Data',
+                        data: [], 
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
                             display: true,
-                            text: 'Time'
-                        }
-                    },
-                    y: {
-                        display: true,
-                        title: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
                             display: true,
-                            text: 'Distance'
+                            title: {
+                                display: true,
+                                text: 'Distance'
+                            }
                         }
                     }
                 }
+            });
+        }
+
+        function updateChart(data) {
+            if (dataChart) {
+                dataChart.data.labels.push(new Date().toLocaleTimeString());
+                dataChart.data.datasets[0].data.push(data);
+
+                dataChart.update();
             }
-        });
-    }
-
-    function updateChart(data) {
-        if (dataChart) {
-            dataChart.data.labels.push(new Date().toLocaleTimeString());
-            dataChart.data.datasets[0].data.push(data);
-
-            dataChart.update();
         }
-    }
 
-    function fetchData() {
-        fetch('/data')
-            .then(response => response.json()) 
-            .then(data => {
-                const serialDataElem = document.getElementById('serial-data');
-                serialDataElem.innerText = Current Distance: ${data.current};
+        function fetchData() {
+            fetch('/data')
+                .then(response => response.json()) 
+                .then(data => {
+                    const serialDataElem = document.getElementById('serial-data');
+                    serialDataElem.innerText = Current Distance: ${data.current};
 
-                const dataListElem = document.getElementById('data-list');
-                dataListElem.innerHTML = ''; 
-                data.history.forEach(item => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = item;
-                    dataListElem.appendChild(listItem);
+                    const dataListElem = document.getElementById('data-list');
+                    dataListElem.innerHTML = ''; 
+                    data.history.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = item;
+                        dataListElem.appendChild(listItem);
+                    });
+
+                    const carElem = document.getElementById('car');
+                    const maxDistance = 250;
+                    const carPosition = (maxDistance - data.current) / maxDistance * 53;
+                    carElem.style.left = ${carPosition}%;
+
+                    updateChart(data.current);
                 });
-
-                const carElem = document.getElementById('car');
-                const maxDistance = 250;
-                const carPosition = (maxDistance - data.current) / maxDistance * 53;
-                carElem.style.left = ${carPosition}%;
-
-                updateChart(data.current);
-            });
-    }
-
-    function startFetching() {
-        if (!intervalId) { 
-            intervalId = setInterval(fetchData, 1000); 
-            document.getElementById('start-button').disabled = true; 
-            document.getElementById('stop-button').disabled = false; 
         }
-        fetch('/start')
-            .then(response => response.text())
-            .then(data => {
-                console.log(data); 
-            });
-    }
 
-    function stopFetching() {
-        if (intervalId) {
-            clearInterval(intervalId); 
-            intervalId = null;
-            document.getElementById('start-button').disabled = false; 
-            document.getElementById('stop-button').disabled = true; 
-            document.getElementById('serial-data').innerText = 'Waiting for data...'; 
-            document.getElementById('data-list').innerHTML = ''; 
-            document.getElementById('car').style.left = '0'; 
-        }
-        fetch('/stop')
-            .then(response => response.text())
-            .then(data => {
-                console.log(data); 
-            });
-    }
-
-    function openSystem() {
-        fetch('/open')
-            .then(response => response.text())
-            .then(data => {
-                alert(data); 
-                document.getElementById('start-button').disabled = false; 
-                document.getElementById('close-button').disabled = false; 
-            });
-    }
-
-    function closeSystem() {
-        fetch('/close')
-            .then(response => response.text())
-            .then(data => {
-                alert(data); 
-                document.getElementById('open-button').disabled = false; 
+        function startFetching() {
+            if (!intervalId) { 
+                intervalId = setInterval(fetchData, 1000); 
                 document.getElementById('start-button').disabled = true; 
+                document.getElementById('stop-button').disabled = false; 
+                document.getElementById('update-parameters-button').disabled = true; 
+            }
+            fetch('/start')
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data); 
+                });
+        }
+
+        function stopFetching() {
+            if (intervalId) {
+                clearInterval(intervalId); 
+                intervalId = null;
+                document.getElementById('start-button').disabled = false; 
                 document.getElementById('stop-button').disabled = true; 
-                document.getElementById('close-button').disabled = true; 
+                document.getElementById('update-parameters-button').disabled = false; 
                 document.getElementById('serial-data').innerText = 'Waiting for data...'; 
                 document.getElementById('data-list').innerHTML = ''; 
                 document.getElementById('car').style.left = '0'; 
-            });
-    }
+            }
+            fetch('/stop')
+                .then(response => response.text())
+                .then(data => {
+                    console.log(data); 
+                });
+        }
 
-    window.onload = function() {
-        initializeChart();
-    };
-</script>
+        function openSystem() {
+            fetch('/open')
+                .then(response => response.text())
+                .then(data => {
+                    alert(data); 
+                    document.getElementById('start-button').disabled = false; 
+                    document.getElementById('close-button').disabled = false; 
+                    document.getElementById('update-parameters-button').disabled = false;
+                });
+        }
+
+        function closeSystem() {
+            fetch('/close')
+                .then(response => response.text())
+                .then(data => {
+                    alert(data); 
+                    document.getElementById('open-button').disabled = false; 
+                    document.getElementById('start-button').disabled = true; 
+                    document.getElementById('stop-button').disabled = true; 
+                    document.getElementById('close-button').disabled = true; 
+                    document.getElementById('update-parameters-button').disabled = true;
+                    document.getElementById('serial-data').innerText = 'Waiting for data...'; 
+                    document.getElementById('data-list').innerHTML = ''; 
+                    document.getElementById('car').style.left = '0'; 
+                });
+        }
+
+        function updateParameters() {
+            const distanceFar = document.getElementById('distanceFar').value;
+            const distanceCloser1 = document.getElementById('distanceCloser1').value;
+            const distanceCloser2 = document.getElementById('distanceCloser2').value;
+            const distanceCloser3 = document.getElementById('distanceCloser3').value;
+            const distanceClose = document.getElementById('distanceClose').value;
+            const params = ${distanceFar},${distanceCloser1},${distanceCloser2},${distanceCloser3},${distanceClose}\n;
+            fetch(/update?params=${params});
+        }
+
+        window.onload = function() {
+            initializeChart();
+            document.getElementById('update-parameters-button').disabled = true;
+        };
+    </script>
 
 </head>
 <body>
-    <h1>Live Serial Data</h1>
-    <p id='serial-data'>Waiting for data...</p>
+    <h1>Parking Sensor</h1>
+    <p id='serial-data'>Waiting for data from sensor ...</p>
     <button id="open-button" onclick="openSystem()">Open System</button>
     <button id="start-button" onclick="startFetching()" disabled>Start Fetching Data</button>
     <button id="stop-button" onclick="stopFetching()" disabled>Stop Fetching Data</button>
     <button id="close-button" onclick="closeSystem()" disabled>Close System</button>
+<div class="input-fields">
+    <label for="distanceFar">Distance Far:</label>
+    <input type="number" id="distanceFar" value="250" max="300" min="0">
+</div>
+<div class="input-fields">
+    <label for="distanceCloser1">Distance Closer But Still Far:</label>
+    <input type="number" id="distanceCloser1" value="200" max="300" min="0">
+</div>
+<div class="input-fields">
+    <label for="distanceCloser2">Distance Mid :</label>
+    <input type="number" id="distanceCloser2" value="150" max="300" min="0">
+</div>
+<div class="input-fields">
+    <label for="distanceCloser3">Distance Close:</label>
+    <input type="number" id="distanceCloser3" value="100" max="300" min="0">
+</div>
+<div class="input-fields">
+    <label for="distanceClose">Distance Very Close:</label>
+    <input type="number" id="distanceClose" value="50" max="300" min="0">
+</div>
+<div class="input-fields">
+    <button id="update-parameters-button" onclick="updateParameters()">Update Parameters</button>
+</div>
+
+
     <ul id="data-list"></ul>
     <div id="container">
         <img id="car" src="{{ url_for('static', filename='car.jpg') }}" alt="Car">

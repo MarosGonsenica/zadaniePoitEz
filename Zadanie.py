@@ -1,5 +1,5 @@
 import serial
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import threading
 from collections import deque
 
@@ -58,6 +58,14 @@ def close_system():
         ser.close()  
         ser = None
     return "System deactivated and connection closed"
+
+@app.route('/update')
+def update_parameters():
+    global ser
+    params = request.args.get('params')
+    if ser and ser.is_open:
+        ser.write(params.encode())
+    return "Parameters updated"
 
 if _name_ == '_main_':
     thread = threading.Thread(target=read_from_serial)
