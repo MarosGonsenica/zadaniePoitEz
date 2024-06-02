@@ -5,6 +5,13 @@
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Serial Data</title>
     <style>
+        body {
+            background-image: url('../static/background.jpg');
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+        }
+        
         #container {
             position: relative;
             width: 80vw;
@@ -23,19 +30,50 @@
             width: 20vw;
         }
         .input-fields {
-            display: block;
+            display: flex;
+            align-items: center;
             margin-bottom: 10px;
         }
-            .input-fields {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    .input-fields label {
-        width: 200px; 
-        margin-right: 10px;
-        text-align: right;
-    }
+        .input-fields label {
+            width: 200px; 
+            margin-right: 10px;
+            text-align: right;
+            color: aliceblue;
+        }
+        .button {
+            display: inline-block;
+            padding: 1vw 2vw;
+            font-size: 2vw;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            outline: none;
+            color: #fff;
+            background-color: #16295c;
+            border: none;
+            border-radius: 1vw;
+            box-shadow: 0 0.3vw #999;
+        }
+      
+        .button:hover {background-color: #0c0755}
+      
+        .button:active {
+            background-color: #441952;
+            box-shadow: 0 0.2vw #666;
+            transform: translateY(0.3vw);
+        }
+
+        #input-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        #data-list {
+            margin-left: 20px;
+            color: aliceblue;
+        }
+
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -92,7 +130,7 @@
                 .then(response => response.json()) 
                 .then(data => {
                     const serialDataElem = document.getElementById('serial-data');
-                    serialDataElem.innerText = Current Distance: ${data.current};
+                    serialDataElem.innerText = `Current Distance: ${data.current}`;
 
                     const dataListElem = document.getElementById('data-list');
                     dataListElem.innerHTML = ''; 
@@ -105,7 +143,7 @@
                     const carElem = document.getElementById('car');
                     const maxDistance = 250;
                     const carPosition = (maxDistance - data.current) / maxDistance * 53;
-                    carElem.style.left = ${carPosition}%;
+                    carElem.style.left = `${carPosition}%`;
 
                     updateChart(data.current);
                 });
@@ -176,8 +214,8 @@
             const distanceCloser2 = document.getElementById('distanceCloser2').value;
             const distanceCloser3 = document.getElementById('distanceCloser3').value;
             const distanceClose = document.getElementById('distanceClose').value;
-            const params = ${distanceFar},${distanceCloser1},${distanceCloser2},${distanceCloser3},${distanceClose}\n;
-            fetch(/update?params=${params});
+            const params = `${distanceFar},${distanceCloser1},${distanceCloser2},${distanceCloser3},${distanceClose}\n`;
+            fetch(`/update?params=${params}`);
         }
 
         window.onload = function() {
@@ -188,38 +226,42 @@
 
 </head>
 <body>
-    <h1>Parking Sensor</h1>
-    <p id='serial-data'>Waiting for data from sensor ...</p>
-    <button id="open-button" onclick="openSystem()">Open System</button>
-    <button id="start-button" onclick="startFetching()" disabled>Start Fetching Data</button>
-    <button id="stop-button" onclick="stopFetching()" disabled>Stop Fetching Data</button>
-    <button id="close-button" onclick="closeSystem()" disabled>Close System</button>
-<div class="input-fields">
-    <label for="distanceFar">Distance Far:</label>
-    <input type="number" id="distanceFar" value="250" max="300" min="0">
-</div>
-<div class="input-fields">
-    <label for="distanceCloser1">Distance Closer But Still Far:</label>
-    <input type="number" id="distanceCloser1" value="200" max="300" min="0">
-</div>
-<div class="input-fields">
-    <label for="distanceCloser2">Distance Mid :</label>
-    <input type="number" id="distanceCloser2" value="150" max="300" min="0">
-</div>
-<div class="input-fields">
-    <label for="distanceCloser3">Distance Close:</label>
-    <input type="number" id="distanceCloser3" value="100" max="300" min="0">
-</div>
-<div class="input-fields">
-    <label for="distanceClose">Distance Very Close:</label>
-    <input type="number" id="distanceClose" value="50" max="300" min="0">
-</div>
-<div class="input-fields">
-    <button id="update-parameters-button" onclick="updateParameters()">Update Parameters</button>
-</div>
+    <h1 style="color: aliceblue;">Parking Sensor</h1>
+    <button class="button" id="open-button" onclick="openSystem()">Open System</button>
+    <button class="button" id="start-button" onclick="startFetching()" disabled>Start Fetching Data</button>
+    <button class="button" id="stop-button" onclick="stopFetching()" disabled>Stop Fetching Data</button>
+    <button class="button" id="close-button" onclick="closeSystem()" disabled>Close System</button>
+    <p id='serial-data' style="color: aliceblue;">Waiting for data from sensor ...</p>
 
+    <div id="input-container">
+        <div>
+            <div class="input-fields">
+                <label for="distanceFar">Distance Far:</label>
+                <input type="number" id="distanceFar" value="250" max="300" min="0">
+            </div>
+            <div class="input-fields">
+                <label for="distanceCloser1">Distance Closer But Still Far:</label>
+                <input type="number" id="distanceCloser1" value="200" max="300" min="0">
+            </div>
+            <div class="input-fields">
+                <label for="distanceCloser2">Distance Mid :</label>
+                <input type="number" id="distanceCloser2" value="150" max="300" min="0">
+            </div>
+            <div class="input-fields">
+                <label for="distanceCloser3">Distance Close:</label>
+                <input type="number" id="distanceCloser3" value="100" max="300" min="0">
+            </div>
+            <div class="input-fields">
+                <label for="distanceClose">Distance Very Close:</label>
+                <input type="number" id="distanceClose" value="50" max="300" min="0">
+            </div>
+            <div class="input-fields">
+                <button class="button" id="update-parameters-button" onclick="updateParameters()">Update Parameters</button>
+            </div>
+        </div>
+        <ul id="data-list"></ul>
+    </div>
 
-    <ul id="data-list"></ul>
     <div id="container">
         <img id="car" src="{{ url_for('static', filename='car.jpg') }}" alt="Car">
         <img id="wall" src="{{ url_for('static', filename='wall.jpg') }}" alt="Wall">
